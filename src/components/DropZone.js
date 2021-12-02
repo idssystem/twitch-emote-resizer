@@ -68,7 +68,10 @@ function DropZone() {
     e.preventDefault();
     e.stopPropagation();
     setDraggingFile(false);
-    if (e.dataTransfer.files[0]) {
+	let [ge,gb] = (e.dataTransfer.files.length-1) ? [confirm('store emotes in archive?'), confirm('store badges in archive?')] : [0,0];
+	if(e.dataTransfer.files.length-1&&!ge&&!gb)
+		return;
+    if(e.dataTransfer.files[0]) {
       setFileName(e.dataTransfer.files[0].name.split('.')[0]);
       setSourceImageUrl(URL.createObjectURL(e.dataTransfer.files[0]));
       setProgress(1);
@@ -89,23 +92,24 @@ function DropZone() {
 					setProgress(1);
 					setLoadingText('Loading image...');
 				}
-				for(let canvasRef of canvasRefs){
-					canvasRef.current.toBlob(blob => {
-						zip.file(`${cn}@${canvasRef.current.width}.png`, blob);
-						if(Object.keys(zip.files).length === canvasRefs.length * _.length){
-							clearInterval(im);
-							zip.generateAsync({ type: 'blob' }).then(zipData => {
-								saveAs(zipData, `Images${Date.now()}.zip`);
-							});
-						}
-					});
-				}
+				canvasRefs.forEach((canvasRef, i) => {
+					if(i < 3 ? genEmotes : genBadges)
+						canvasRef.current.toBlob(blob => {
+							zip.file(`${cn}@${canvasRef.current.width}.png`, blob);
+							if(Object.keys(zip.files).length === (canvasRefs.length/2*(ge+gb)) * _.length){
+								clearInterval(im);
+								zip.generateAsync({ type: 'blob' }).then(zipData => {
+									saveAs(zipData, `Images${Date.now()}.zip`);
+								});
+							}
+						});
+				});
 				}catch(s){
 					n.e(s)
 				}finally{n.f()}
 			}
 			// continue once all images have been added to the zip
-			if(Object.keys(zip.files).length === canvasRefs.length * ix && _[ix]){
+			if(Object.keys(zip.files).length === (canvasRefs.length/2*(ge+gb)) * ix && _[ix]){
 				setFileName(cn=_[ix].name.split(".")[0]);
 				setSourceImageUrl(URL.createObjectURL(_[ix]));
 				setProgress(1);
