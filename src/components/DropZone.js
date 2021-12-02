@@ -74,6 +74,46 @@ function DropZone() {
       setProgress(1);
       setLoadingText('Loading image...');
     }
+	if(e.dataTransfer.files[1]){
+		let dz=document.getElementsByClassName('DropZone')[0],
+			_=[...e.dataTransfer.files],
+			cn=_[0].name.split('.')[0],
+			zip = new JSZip();
+			ix=1,
+			im;
+    
+		im=setInterval(()=>{
+			if(dz.classList.contains('Done')){
+				if(ix<_.length){
+					dz.classList.remove('Done');
+					setProgress(1);
+					setLoadingText('Loading image...');
+				}
+				for(let canvasRef of canvasRefs){
+					canvasRef.current.toBlob(blob => {
+						zip.file(`${cn}@${canvasRef.current.width}.png`, blob);
+						if(Object.keys(zip.files).length === canvasRefs.length * _.length){
+							clearInterval(im);
+							zip.generateAsync({ type: 'blob' }).then(zipData => {
+								saveAs(zipData, `Images${Date.now()}.zip`);
+							});
+						}
+					});
+				}
+				}catch(s){
+					n.e(s)
+				}finally{n.f()}
+			}
+			// continue once all images have been added to the zip
+			if(Object.keys(zip.files).length === canvasRefs.length * ix && _[ix]){
+				setFileName(cn=_[ix].name.split(".")[0]);
+				setSourceImageUrl(URL.createObjectURL(_[ix]));
+				setProgress(1);
+				setLoadingText('Loading image...');
+				ix++;
+			}
+		}, 100)
+	}
   };
   const handleImageLoad = e => {
     // Preserve aspect ratio
